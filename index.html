@@ -3,17 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alpha-Omega 2026 超频版</title>
+    <title>Alpha-Omega 2026 终极版</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <style>
         body { background-color: #050b14; color: #c9d1d9; font-family: -apple-system, sans-serif; overflow-x: hidden; }
         .glass-panel { background: rgba(13, 17, 23, 0.85); border: 1px solid #1f2937; border-radius: 12px; }
         .neon-text { text-shadow: 0 0 15px rgba(88, 166, 255, 0.8); }
         .profit-green { color: #10b981; }
         .loss-red { color: #ef4444; }
-        /* 添加平滑过渡动画 */
-        .price-transition { transition: color 0.2s ease-in-out; }
+        .price-transition { transition: color 0.1s ease-in-out; }
     </style>
 </head>
 <body class="min-h-screen p-4 flex flex-col gap-4">
@@ -21,7 +20,7 @@
     <header class="glass-panel p-4 flex justify-between items-center border-b-2 border-blue-500">
         <div>
             <h1 class="text-xl lg:text-3xl font-bold text-blue-400 neon-text tracking-wider">Alpha-Omega 2026</h1>
-            <p class="text-xs text-gray-400 mt-1">引擎模式: <span class="profit-green font-bold animate-pulse">● 本地高频算力全开 (60FPS)</span></p>
+            <p class="text-xs text-gray-400 mt-1">引擎模式: <span class="profit-green font-bold animate-pulse">● 核心算力分离执行中</span></p>
         </div>
         <div class="text-right">
              <div class="text-xs text-gray-500 font-mono">LATENCY: <span class="text-green-400">0ms</span></div>
@@ -29,17 +28,17 @@
     </header>
 
     <main class="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-4">
-        
         <div class="glass-panel col-span-1 lg:col-span-3 p-4 flex flex-col min-h-[450px]">
             <div class="flex justify-between items-center mb-2">
                 <h2 class="text-sm font-semibold text-gray-300">TRX/USDT 高频推演盘口 (Tick级别)</h2>
-                <div id="main-price" class="text-3xl font-bold font-mono profit-green price-transition">0.11500</div>
+                <div id="main-price" class="text-4xl font-bold font-mono profit-green price-transition">0.11500</div>
             </div>
-            <div id="tvchart" class="flex-1 w-full h-[350px] lg:h-full rounded overflow-hidden relative"></div>
+            <div id="tvchart" class="flex-1 w-full h-[350px] lg:h-full rounded overflow-hidden relative flex items-center justify-center bg-[#0a0f18] border border-gray-800">
+                <span id="chart-status" class="text-gray-500 font-mono text-sm animate-pulse">正在初始化视觉渲染引擎...</span>
+            </div>
         </div>
 
         <div class="col-span-1 flex flex-col gap-4">
-            
             <div class="glass-panel p-4">
                 <h2 class="text-sm font-semibold text-gray-300 border-b border-gray-700 pb-2 mb-3">高频引擎状态</h2>
                 <div class="grid grid-cols-2 gap-3">
@@ -48,8 +47,8 @@
                         <p class="text-xl font-bold text-blue-400">5.0 /s</p>
                     </div>
                     <div class="bg-gray-800 p-3 rounded border border-gray-700 text-center">
-                        <p class="text-xs text-gray-400">模拟深度</p>
-                        <p class="text-xl font-bold text-purple-400">L2</p>
+                        <p class="text-xs text-gray-400">视觉渲染</p>
+                        <p id="render-status" class="text-xl font-bold text-yellow-400">检测中</p>
                     </div>
                     <div class="bg-gray-800 p-3 rounded border border-gray-700 text-center">
                         <p class="text-xs text-gray-400">做多概率</p>
@@ -57,12 +56,128 @@
                     </div>
                     <div class="bg-gray-800 p-3 rounded border border-gray-700 text-center">
                         <p class="text-xs text-gray-400">波动微粒</p>
-                        <p id="volatility" class="text-xl font-bold text-yellow-400">0.02</p>
+                        <p id="volatility" class="text-xl font-bold text-white">0.02</p>
                     </div>
                 </div>
             </div>
 
             <div class="glass-panel p-4 flex-1 flex flex-col">
                 <h2 class="text-sm font-semibold text-gray-300 border-b border-gray-700 pb-2 mb-2">算力执行流</h2>
-                <div id="signalLog" class="flex-1 bg-[#0d1117] rounded p-2 overflow-y-auto font-mono text-[10px] sm:text-xs text-gray-400 space-y-1 min-h-[150px] max-h-[200px]">
-                    
+                <div id="signalLog" class="flex-1 bg-[#0d1117] rounded p-2 overflow-y-auto font-mono text-[10px] sm:text-xs text-gray-400 space-y-1 min-h-[150px] max-h-[250px]">
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- 1. 强悍的日志模块 ---
+        const logBox = document.getElementById('signalLog');
+        function logAction(msg, type = 'info') {
+            try {
+                const time = new Date().toISOString().split('T')[1].slice(0, 12);
+                let tag = '<span class="text-gray-500">[SYS]</span>';
+                if (type === 'buy') tag = '<span class="text-green-500 font-bold">[BUY]</span>';
+                if (type === 'sell') tag = '<span class="text-red-500 font-bold">[SELL]</span>';
+                if (type === 'error') tag = '<span class="text-red-500 font-bold">[ERR]</span>';
+                if (type === 'warn') tag = '<span class="text-yellow-500 font-bold">[WRN]</span>';
+                
+                const div = document.createElement('div');
+                div.innerHTML = `${time} ${tag} ${msg}`;
+                logBox.prepend(div);
+                if (logBox.children.length > 40) logBox.removeChild(logBox.lastChild);
+            } catch(e) {}
+        }
+
+        logAction("核心算力引擎已剥离并启动");
+
+        // --- 2. 视觉渲染引擎探测与隔离 ---
+        let candleSeries = null;
+        let isChartActive = false;
+
+        try {
+            if (typeof LightweightCharts !== 'undefined') {
+                logAction("视觉渲染引擎 (CDN) 挂载成功");
+                document.getElementById('render-status').innerText = "ONLINE";
+                document.getElementById('render-status').className = "text-xl font-bold profit-green";
+                
+                const chartContainer = document.getElementById('tvchart');
+                chartContainer.innerHTML = ''; // 清除预设文字
+                
+                const chartOptions = { 
+                    layout: { textColor: '#c9d1d9', background: { type: 'solid', color: 'transparent' } },
+                    grid: { vertLines: { color: '#1f2937' }, horzLines: { color: '#1f2937' } },
+                    timeScale: { timeVisible: true, secondsVisible: true }
+                };
+                const chart = LightweightCharts.createChart(chartContainer, chartOptions);
+                candleSeries = chart.addCandlestickSeries({ 
+                    upColor: '#10b981', downColor: '#ef4444', borderVisible: false, wickUpColor: '#10b981', wickDownColor: '#ef4444' 
+                });
+
+                new ResizeObserver(() => {
+                    chart.applyOptions({ width: chartContainer.clientWidth, height: chartContainer.clientHeight });
+                }).observe(chartContainer);
+
+                isChartActive = true;
+            } else {
+                throw new Error("LightweightCharts is undefined");
+            }
+        } catch (e) {
+            logAction("网络拦截了画图库，已降级为【纯参数监测模式】", "warn");
+            document.getElementById('render-status').innerText = "BLOCKED";
+            document.getElementById('render-status').className = "text-xl font-bold loss-red";
+            document.getElementById('chart-status').innerText = "【渲染降级】K线图被网络拦截，核心算力仍在后台全速运行...";
+            document.getElementById('chart-status').className = "text-red-500 font-bold";
+        }
+
+        // --- 3. 核心推演引擎 (无论图表死活，这颗心脏永远跳动) ---
+        let baseTime = Math.floor(Date.now() / 1000) - 300;
+        let currentPrice = 0.11500;
+        let currentCandle = { time: baseTime + 300, open: currentPrice, high: currentPrice, low: currentPrice, close: currentPrice };
+        let lastUpdateTime = Date.now();
+        
+        const priceDisplay = document.getElementById('main-price');
+        const probDisplay = document.getElementById('long-prob');
+        const volDisplay = document.getElementById('volatility');
+
+        // 每秒 5 次 (200ms) 绝对高频运转
+        setInterval(() => {
+            const now = Date.now();
+            
+            if (now - lastUpdateTime > 3000) {
+                currentCandle = { time: currentCandle.time + 3, open: currentPrice, high: currentPrice, low: currentPrice, close: currentPrice };
+                lastUpdateTime = now;
+            }
+
+            // 动能推演
+            const momentum = (Math.random() - 0.5) * 0.0004;
+            currentPrice = +(currentPrice + momentum).toFixed(5);
+            
+            currentCandle.high = Math.max(currentCandle.high, currentPrice);
+            currentCandle.low = Math.min(currentCandle.low, currentPrice);
+            currentCandle.close = currentPrice;
+
+            // 1. 更新大字报数字 (绝对执行)
+            priceDisplay.innerText = currentPrice.toFixed(5);
+            priceDisplay.className = currentPrice >= currentCandle.open ? 
+                "text-4xl font-bold font-mono profit-green price-transition" : 
+                "text-4xl font-bold font-mono loss-red price-transition";
+
+            // 2. 如果图表没死，才更新图表
+            if (isChartActive && candleSeries) {
+                candleSeries.update(currentCandle);
+            }
+
+            // 3. 随机产生日志和副指标 (绝对执行)
+            if (Math.random() > 0.8) {
+                const isBuy = Math.random() > 0.5;
+                const amt = Math.floor(Math.random() * 80000 + 5000);
+                logAction(`撮合引擎处理 ${amt} TRX 订单`, isBuy ? 'buy' : 'sell');
+                
+                probDisplay.innerText = Math.floor(Math.random() * 60 + 20) + '%';
+                volDisplay.innerText = (Math.random() * 0.08).toFixed(3);
+            }
+        }, 200);
+
+    </script>
+</body>
+</html>
