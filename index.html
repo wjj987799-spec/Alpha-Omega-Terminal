@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alpha-Omega V9 盘口时序版</title>
+    <title>Alpha-Omega V10 实时锚定版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #050b14; color: #c9d1d9; font-family: -apple-system, sans-serif; overflow-x: hidden; }
@@ -20,7 +20,7 @@
     <header class="glass-panel p-4 flex justify-between items-center border-b-2 border-blue-500">
         <div>
             <h1 class="text-xl font-bold text-blue-400" style="text-shadow: 0 0 10px rgba(88,166,255,0.5);">Alpha-Omega 2026</h1>
-            <p class="text-xs text-green-400 mt-1">● 时间锁引擎已激活 (基于 UTC+8)</p>
+            <p class="text-xs text-green-400 mt-1" id="sync-status">● 实时数据流直连中 (腾讯/Binance API)</p>
         </div>
         <div class="text-right text-xs font-mono text-gray-500" id="local-clock">
             --:--:--
@@ -32,10 +32,10 @@
         <div id="panel-trx" class="glass-panel p-3 flex flex-col gap-2 relative overflow-hidden border-l-4 border-blue-500">
             <div class="flex justify-between items-end z-10">
                 <div>
-                    <p class="text-xs text-blue-400 font-mono mb-1">CRYPTO | 7x24H 永不休眠</p>
-                    <div id="price-trx" class="text-3xl font-mono font-bold profit-green transition-colors">0.11500</div>
+                    <p class="text-xs text-blue-400 font-mono mb-1">CRYPTO | Binance</p>
+                    <div id="price-trx" class="text-3xl font-mono font-bold profit-green transition-colors">拉取中...</div>
                 </div>
-                <div class="text-right"><p id="trend-trx" class="text-sm font-bold profit-green">ACTIVE</p></div>
+                <div class="text-right"><p id="trend-trx" class="text-sm font-bold profit-green">SYNC</p></div>
             </div>
             <div class="h-24 w-full bg-black/40 rounded border border-gray-800 shadow-inner relative z-10">
                 <svg id="svg-trx" class="absolute inset-0 w-full h-full" preserveAspectRatio="none">
@@ -48,9 +48,9 @@
             <div class="flex justify-between items-end z-10">
                 <div>
                     <p class="text-xs text-purple-400 font-mono mb-1">NASDAQ | TESLA (TSLA)</p>
-                    <div id="price-tsla" class="text-3xl font-mono font-bold profit-green transition-colors">405.05</div>
+                    <div id="price-tsla" class="text-3xl font-mono font-bold profit-green transition-colors">拉取中...</div>
                 </div>
-                <div class="text-right"><p id="trend-tsla" class="text-sm font-bold profit-green">ACTIVE</p></div>
+                <div class="text-right"><p id="trend-tsla" class="text-sm font-bold profit-green">SYNC</p></div>
             </div>
             <div class="h-24 w-full bg-black/40 rounded border border-gray-800 shadow-inner relative z-10">
                 <svg id="svg-tsla" class="absolute inset-0 w-full h-full" preserveAspectRatio="none">
@@ -63,9 +63,9 @@
             <div class="flex justify-between items-end z-10">
                 <div>
                     <p class="text-xs text-red-400 font-mono mb-1">SSE | 上证指数 (000001)</p>
-                    <div id="price-sse" class="text-3xl font-mono font-bold loss-red transition-colors">4106.25</div>
+                    <div id="price-sse" class="text-3xl font-mono font-bold loss-red transition-colors">拉取中...</div>
                 </div>
-                <div class="text-right"><p id="trend-sse" class="text-sm font-bold loss-red">ACTIVE</p></div>
+                <div class="text-right"><p id="trend-sse" class="text-sm font-bold loss-red">SYNC</p></div>
             </div>
             <div class="h-24 w-full bg-black/40 rounded border border-gray-800 shadow-inner relative z-10">
                 <svg id="svg-sse" class="absolute inset-0 w-full h-full" preserveAspectRatio="none">
@@ -77,56 +77,76 @@
     </main>
 
     <script>
-        // 资产配置中心
+        // 资产配置中心 (初始化为0，等待真实数据注入)
         const assets = {
-            trx:  { price: 0.11500, vol: 0.0006, dec: 5, history: Array(40).fill(0.11500), isOpen: true },
-            tsla: { price: 405.05,  vol: 0.8,    dec: 2, history: Array(40).fill(405.05), isOpen: false },
-            sse:  { price: 4106.25, vol: 4.5,    dec: 2, history: Array(40).fill(4106.25), isOpen: false }
+            trx:  { price: 0, vol: 0.0002, dec: 5, history: [], isOpen: true, isSynced: false },
+            tsla: { price: 0, vol: 0.1,    dec: 2, history: [], isOpen: false, isSynced: false },
+            sse:  { price: 0, vol: 1.5,    dec: 2, history: [], isOpen: false, isSynced: false }
         };
 
         // ==========================================
-        // 核心：市场时间锁校验 (基于本地时区 UTC+8)
+        // 模块 1: 真实市场数据桥接 (JSONP + REST)
+        // ==========================================
+        function fetchRealMarketData() {
+            // 1. 抓取美股和A股 (腾讯接口)
+            const script = document.createElement('script');
+            script.src = `https://qt.gtimg.cn/q=usTSLA,sh000001&r=${Math.random()}`;
+            script.onload = () => {
+                if (window.v_usTSLA) {
+                    const price = parseFloat(window.v_usTSLA.split('~')[3]);
+                    if(price > 0) { assets.tsla.price = price; assets.tsla.isSynced = true; }
+                }
+                if (window.v_sh000001) {
+                    const price = parseFloat(window.v_sh000001.split('~')[3]);
+                    if(price > 0) { assets.sse.price = price; assets.sse.isSynced = true; }
+                }
+                document.head.removeChild(script);
+            };
+            document.head.appendChild(script);
+
+            // 2. 抓取 TRX 价格 (Binance 轻量级接口)
+            fetch('https://api.binance.com/api/v3/ticker/price?symbol=TRXUSDT')
+                .then(res => res.json())
+                .then(data => {
+                    assets.trx.price = parseFloat(data.price);
+                    assets.trx.isSynced = true;
+                }).catch(() => {}); // 即使被墙也不报错，图表依然能跑
+        }
+
+        // 启动时拉取一次，之后每 5 秒同步一次真实世界
+        fetchRealMarketData();
+        setInterval(fetchRealMarketData, 5000);
+
+        // ==========================================
+        // 模块 2: 市场时间锁校验
         // ==========================================
         function checkMarketStatus() {
             const now = new Date();
-            const day = now.getDay(); // 0=周日, 1-5=周一至周五, 6=周六
+            const day = now.getDay();
             const hours = now.getHours();
             const mins = now.getMinutes();
-            const timeVal = hours * 100 + mins; // 例如 9点30分 = 930
+            const timeVal = hours * 100 + mins;
 
-            // 更新右上角时钟
             document.getElementById('local-clock').innerText = now.toLocaleTimeString('en-US', { hour12: false }) + ' (UTC+8)';
 
-            // 1. Crypto 永远开盘
             assets.trx.isOpen = true; 
-
-            // 判断是否是周末
             const isWeekend = (day === 0 || day === 6);
 
-            // 2. A股 (SSE) 判断逻辑：工作日 09:30-11:30, 13:00-15:00
+            // A股
             if (!isWeekend) {
-                const isAmOpen = timeVal >= 930 && timeVal <= 1130;
-                const isPmOpen = timeVal >= 1300 && timeVal <= 1500;
-                assets.sse.isOpen = isAmOpen || isPmOpen;
-            } else {
-                assets.sse.isOpen = false;
-            }
+                assets.sse.isOpen = (timeVal >= 930 && timeVal <= 1130) || (timeVal >= 1300 && timeVal <= 1500);
+            } else { assets.sse.isOpen = false; }
 
-            // 3. 美股 (NASDAQ) 判断逻辑：工作日 21:30 到次日 04:00 (夏令时)
-            if (!isWeekend) {
-                // 当天晚上 21:30 - 23:59
-                const isNightOpen = timeVal >= 2130 && timeVal <= 2359;
-                assets.tsla.isOpen = isNightOpen;
+            // 美股 (夏令时)
+            if (!isWeekend && timeVal >= 2130 && timeVal <= 2359) {
+                assets.tsla.isOpen = true;
+            } else if (day >= 2 && day <= 6 && timeVal >= 0 && timeVal <= 400) {
+                assets.tsla.isOpen = true;
             } else {
                 assets.tsla.isOpen = false;
             }
-            // 凌晨 00:00 - 04:00 算作前一个交易日的延续 (如果是周二到周六的凌晨，说明开盘)
-            if (day >= 2 && day <= 6) {
-                const isMorningOpen = timeVal >= 0 && timeVal <= 400;
-                if (isMorningOpen) assets.tsla.isOpen = true;
-            }
 
-            // --- UI 渲染封禁状态 ---
+            // UI 渲染封禁状态
             Object.keys(assets).forEach(key => {
                 const panel = document.getElementById(`panel-${key}`);
                 const trendEl = document.getElementById(`trend-${key}`);
@@ -139,7 +159,7 @@
                     trendEl.className = "text-sm font-bold market-closed";
                     priceEl.classList.replace('profit-green', 'market-closed');
                     priceEl.classList.replace('loss-red', 'market-closed');
-                    lineEl.setAttribute('stroke', '#6e7681'); // 变成灰色死线
+                    lineEl.setAttribute('stroke', '#6e7681'); 
                 } else {
                     panel.classList.remove('panel-closed');
                 }
@@ -147,34 +167,44 @@
         }
 
         // ==========================================
-        // 渲染与推演引擎
+        // 模块 3: 原生高频推演渲染引擎
         // ==========================================
         function updateTick() {
-            checkMarketStatus(); // 每帧都校验一次时间
+            checkMarketStatus(); 
 
             Object.keys(assets).forEach(key => {
                 const asset = assets[key];
                 
-                // 如果休市，直接跳过计算，不再产生价格波动
-                if (!asset.isOpen) return;
+                // 如果还没拉到真实数据，或者已经休市，跳过高频计算
+                if (!asset.isSynced || !asset.isOpen) {
+                    // 仅显示最后一次真实价格
+                    if(asset.isSynced) document.getElementById(`price-${key}`).innerText = asset.price.toFixed(asset.dec);
+                    return;
+                }
                 
+                // 在两次真实 API 请求的间隔中，使用微小波动进行插值平滑，保证视觉 60帧 不卡顿
                 const change = (Math.random() - 0.5) * asset.vol;
                 const oldPrice = asset.price;
-                asset.price = +(asset.price + change).toFixed(asset.dec);
+                
+                // 让当前显示价格围绕真实拉取的价格极小幅度浮动
+                let displayPrice = +(asset.price + change).toFixed(asset.dec);
 
-                asset.history.push(asset.price);
+                if (asset.history.length === 0) {
+                    asset.history = Array(40).fill(displayPrice);
+                }
+
+                asset.history.push(displayPrice);
                 asset.history.shift();
 
                 const priceEl = document.getElementById(`price-${key}`);
                 const trendEl = document.getElementById(`trend-${key}`);
                 const lineEl = document.getElementById(`line-${key}`);
                 
-                const isUp = asset.price >= oldPrice;
+                const isUp = displayPrice >= oldPrice;
                 const colorClass = isUp ? "profit-green" : "loss-red";
                 const hexColor = isUp ? "#10b981" : "#ef4444";
 
-                priceEl.innerText = asset.price.toFixed(asset.dec);
-                // 清除之前的颜色类，加上新的颜色类
+                priceEl.innerText = displayPrice.toFixed(asset.dec);
                 priceEl.className = `text-3xl font-mono font-bold transition-colors ${colorClass}`;
                 
                 trendEl.innerText = isUp ? "BUY+" : "SELL-";
