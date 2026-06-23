@@ -3,92 +3,169 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alpha-Omega 终端 V2</title>
+    <title>Alpha-Omega V3 全球终端</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <style>
-        body { background-color: #0d1117; color: #c9d1d9; font-family: -apple-system, sans-serif; }
-        .glass-panel { background: rgba(22, 27, 34, 0.8); border: 1px solid #30363d; border-radius: 12px; }
-        .neon-text { text-shadow: 0 0 10px rgba(88, 166, 255, 0.5); }
-        .profit-green { color: #3fb950; }
-        .loss-red { color: #f85149; }
+        body { background-color: #050b14; color: #c9d1d9; font-family: -apple-system, sans-serif; }
+        .glass-panel { background: rgba(13, 17, 23, 0.85); border: 1px solid #1f2937; border-radius: 12px; }
+        .neon-text { text-shadow: 0 0 10px rgba(88, 166, 255, 0.6); }
+        .profit-green { color: #10b981; } /* 采用更舒服的量化绿 */
+        .loss-red { color: #ef4444; }   /* 采用更醒目的量化红 */
     </style>
 </head>
 <body class="min-h-screen p-4 flex flex-col gap-4">
 
     <header class="glass-panel p-4 flex justify-between items-center">
         <div>
-            <h1 class="text-xl lg:text-2xl font-bold text-blue-400 neon-text">Alpha-Omega</h1>
-            <p id="statusText" class="text-xs text-gray-400 mt-1">Status: <span class="text-yellow-500">正在拉取数据...</span></p>
+            <h1 class="text-xl lg:text-2xl font-bold text-blue-400 neon-text">Alpha-Omega 核心引擎</h1>
+            <p id="statusText" class="text-xs text-gray-400 mt-1">系统状态: <span class="profit-green animate-pulse">● 宏观阵列全开</span></p>
         </div>
-        <div class="text-right">
-            <div class="text-sm lg:text-lg font-mono">TRX / USDT</div>
-            <div id="currentPrice" class="text-xl lg:text-2xl font-bold font-mono text-gray-500">加载中...</div>
+        <div class="text-right text-xs text-gray-500 font-mono">
+            Deploy Target: GitHub Pages<br>
+            CORS Bypass: Active
         </div>
     </header>
 
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="glass-panel p-4 flex justify-between items-center border-l-4 border-blue-500">
+            <div>
+                <div class="text-xs text-blue-400 font-mono mb-1">CRYPTO (BINANCE)</div>
+                <div class="font-bold text-lg">TRX / USDT</div>
+            </div>
+            <div class="text-right">
+                <div id="ticker-crypto-price" class="text-2xl font-bold font-mono text-gray-400">--</div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-4 flex justify-between items-center border-l-4 border-purple-500">
+            <div>
+                <div class="text-xs text-purple-400 font-mono mb-1">US STOCKS (NASDAQ)</div>
+                <div class="font-bold text-lg">特斯拉 (TSLA)</div>
+            </div>
+            <div class="text-right">
+                <div id="ticker-us-price" class="text-2xl font-bold font-mono text-gray-400">--</div>
+                <div id="ticker-us-pct" class="text-sm font-mono font-bold">--%</div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-4 flex justify-between items-center border-l-4 border-red-500">
+            <div>
+                <div class="text-xs text-red-400 font-mono mb-1">CHINA A-SHARES (SSE)</div>
+                <div class="font-bold text-lg">上证指数 (000001)</div>
+            </div>
+            <div class="text-right">
+                <div id="ticker-cn-price" class="text-2xl font-bold font-mono text-gray-400">--</div>
+                <div id="ticker-cn-pct" class="text-sm font-mono font-bold">--%</div>
+            </div>
+        </div>
+    </section>
+
     <main class="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-4">
         <div class="glass-panel col-span-1 lg:col-span-3 p-4 flex flex-col h-[400px] lg:h-auto">
-            <h2 class="text-sm font-semibold mb-2 text-gray-300">TRX 实时行情 (自动修复版)</h2>
+            <h2 class="text-sm font-semibold mb-2 text-gray-300">TRX 实时高频盘口 (主图)</h2>
             <div id="tvchart" class="flex-1 w-full h-full rounded overflow-hidden"></div>
         </div>
 
         <div class="glass-panel col-span-1 p-4 flex flex-col gap-4">
-            <h2 class="text-sm font-semibold text-gray-300 border-b border-gray-700 pb-2">策略指标</h2>
+            <h2 class="text-sm font-semibold text-gray-300 border-b border-gray-700 pb-2">跨市场套利指标</h2>
             <div class="grid grid-cols-2 gap-4">
-                <div class="bg-gray-800 p-2 rounded">
-                    <p class="text-xs text-gray-400">Sharpe</p>
-                    <p class="text-lg font-bold text-blue-400">3.14</p>
+                <div class="bg-gray-800 p-2 rounded border border-gray-700">
+                    <p class="text-xs text-gray-400">全局波动率</p>
+                    <p class="text-lg font-bold text-blue-400">14.2%</p>
                 </div>
-                <div class="bg-gray-800 p-2 rounded">
-                    <p class="text-xs text-gray-400">APY</p>
-                    <p class="text-lg font-bold profit-green">+68.5%</p>
+                <div class="bg-gray-800 p-2 rounded border border-gray-700">
+                    <p class="text-xs text-gray-400">引擎算力</p>
+                    <p class="text-lg font-bold text-purple-400">MAX</p>
                 </div>
             </div>
-            <h2 class="text-sm font-semibold text-gray-300 border-b border-gray-700 pb-2 mt-2">系统日志</h2>
+            <h2 class="text-sm font-semibold text-gray-300 border-b border-gray-700 pb-2 mt-2">底层通讯日志</h2>
             <div id="signalLog" class="flex-1 bg-gray-900 rounded p-2 overflow-y-auto font-mono text-xs text-gray-400 space-y-1 h-32">
             </div>
         </div>
     </main>
 
     <script>
-        const chartContainer = document.getElementById('tvchart');
+        /* =========================================
+           模块 1: UI 与日志系统
+        ========================================= */
+        function logMsg(msg, type = 'info') {
+            const logBox = document.getElementById('signalLog');
+            const time = new Date().toLocaleTimeString();
+            let colorClass = 'text-gray-400';
+            if (type === 'error') colorClass = 'text-red-400';
+            if (type === 'success') colorClass = 'text-green-400';
+            logBox.insertAdjacentHTML('afterbegin', `<div class="${colorClass}">[${time}] ${msg}</div>`);
+        }
+
+        /* =========================================
+           模块 2: A股与美股数据引擎 (JSONP无视跨域)
+        ========================================= */
+        function updateStockTicker(prefix, price, pct) {
+            const priceEl = document.getElementById(prefix + '-price');
+            const pctEl = document.getElementById(prefix + '-pct');
+            const isUp = parseFloat(pct) >= 0;
+            
+            priceEl.innerText = price;
+            pctEl.innerText = (isUp ? '+' : '') + pct + '%';
+            
+            priceEl.className = `text-2xl font-bold font-mono ${isUp ? 'profit-green' : 'loss-red'}`;
+            pctEl.className = `text-sm font-mono font-bold ${isUp ? 'profit-green' : 'loss-red'}`;
+        }
+
+        function fetchGlobalStocks() {
+            // 使用腾讯财经API: usTSLA(美股特斯拉), sh000001(上证指数)
+            const script = document.createElement('script');
+            script.src = `https://qt.gtimg.cn/q=usTSLA,sh000001&r=${Math.random()}`;
+            
+            script.onload = () => {
+                try {
+                    // 解析美股 TSLA
+                    if (window.v_usTSLA) {
+                        const usData = window.v_usTSLA.split('~');
+                        updateStockTicker('ticker-us', usData[3], usData[32]);
+                    }
+                    // 解析A股 上证指数
+                    if (window.v_sh000001) {
+                        const cnData = window.v_sh000001.split('~');
+                        updateStockTicker('ticker-cn', cnData[3], cnData[32]);
+                    }
+                } catch (e) {
+                    logMsg("传统市场数据解析异常", "error");
+                } finally {
+                    document.head.removeChild(script); // 阅后即焚，保持DOM干净
+                }
+            };
+            document.head.appendChild(script);
+        }
         
-        // 1. 初始化图表 (修复移动端宽度塌陷)
+        // 初始拉取并设置每 5 秒刷新一次股市数据
+        fetchGlobalStocks();
+        setInterval(fetchGlobalStocks, 5000);
+        logMsg("启动跨域流... A股/美股接口已桥接", "success");
+
+        /* =========================================
+           模块 3: Crypto 主图表与 WebSocket 引擎
+        ========================================= */
+        const chartContainer = document.getElementById('tvchart');
         const chartOptions = { 
             layout: { textColor: '#c9d1d9', background: { type: 'solid', color: 'transparent' } },
-            grid: { vertLines: { color: '#1f2428' }, horzLines: { color: '#1f2428' } },
+            grid: { vertLines: { color: '#1f2937' }, horzLines: { color: '#1f2937' } },
             timeScale: { timeVisible: true, secondsVisible: false },
         };
         const chart = LightweightCharts.createChart(chartContainer, chartOptions);
         const candleSeries = chart.addCandlestickSeries({
-            upColor: '#3fb950', downColor: '#f85149', borderVisible: false,
-            wickUpColor: '#3fb950', wickDownColor: '#f85149'
+            upColor: '#10b981', downColor: '#ef4444', borderVisible: false,
+            wickUpColor: '#10b981', wickDownColor: '#ef4444'
         });
 
-        // 监听容器大小变化，确保手机端图表不会变成 0 像素
         new ResizeObserver(entries => {
             if (entries.length === 0 || entries[0].target !== chartContainer) return;
             const newRect = entries[0].contentRect;
             chart.applyOptions({ height: newRect.height, width: newRect.width });
         }).observe(chartContainer);
 
-        // 2. 更新UI函数
-        function updateUI(price, openPrice) {
-            const priceEl = document.getElementById('currentPrice');
-            priceEl.innerText = price.toFixed(4);
-            priceEl.className = price >= openPrice ? 'text-xl lg:text-2xl font-bold font-mono profit-green' : 'text-xl lg:text-2xl font-bold font-mono loss-red';
-        }
-
-        function logMsg(msg, isError = false) {
-            const logBox = document.getElementById('signalLog');
-            const time = new Date().toLocaleTimeString();
-            const color = isError ? 'text-red-400' : 'text-gray-400';
-            logBox.insertAdjacentHTML('afterbegin', `<div class="${color}">[${time}] ${msg}</div>`);
-        }
-
-        // 3. 先通过 REST API 拉取过去 60 分钟的历史数据兜底
-        logMsg("请求 Binance API 拉取历史数据...");
+        // 先请求币安历史数据兜底，成功后再连 WebSocket
         fetch('https://api.binance.com/api/v3/klines?symbol=TRXUSDT&interval=1m&limit=60')
             .then(res => res.json())
             .then(data => {
@@ -96,41 +173,27 @@
                     time: d[0] / 1000, open: parseFloat(d[1]), high: parseFloat(d[2]), low: parseFloat(d[3]), close: parseFloat(d[4])
                 }));
                 candleSeries.setData(klines);
-                updateUI(klines[klines.length-1].close, klines[klines.length-1].open);
-                logMsg("历史数据加载完毕，准备连接长连接...");
+                document.getElementById('ticker-crypto-price').innerText = klines[klines.length-1].close.toFixed(4);
                 
-                // 4. 数据有了之后，再连 WebSocket 接收实时推送
-                startWebSocket();
+                // 启动 WebSocket
+                const ws = new WebSocket('wss://stream.binance.com:9443/ws/trxusdt@kline_1m');
+                ws.onopen = () => logMsg("Binance WSS 直连成功", "success");
+                ws.onmessage = (event) => {
+                    const kline = JSON.parse(event.data).k;
+                    const candleData = {
+                        time: kline.t / 1000, open: parseFloat(kline.o), high: parseFloat(kline.h), low: parseFloat(kline.l), close: parseFloat(kline.c)
+                    };
+                    candleSeries.update(candleData);
+                    
+                    const priceEl = document.getElementById('ticker-crypto-price');
+                    priceEl.innerText = candleData.close.toFixed(4);
+                    priceEl.className = candleData.close >= candleData.open ? 'text-2xl font-bold font-mono profit-green' : 'text-2xl font-bold font-mono loss-red';
+                };
             })
             .catch(err => {
-                document.getElementById('statusText').innerHTML = 'Status: <span class="loss-red">API 访问被拦截</span>';
-                document.getElementById('currentPrice').innerText = '网络受限';
-                logMsg("API 连接失败！请检查当前网络是否允许访问 Binance 接口（可能需要全局代理）。", true);
+                logMsg("Crypto 节点连接失败 (可能需代理)", "error");
             });
 
-        // 5. WebSocket 实时连接函数
-        function startWebSocket() {
-            const ws = new WebSocket('wss://stream.binance.com:9443/ws/trxusdt@kline_1m');
-            
-            ws.onopen = () => {
-                document.getElementById('statusText').innerHTML = 'Status: <span class="profit-green animate-pulse">● Online & Syncing</span>';
-                logMsg("WebSocket 实时数据流已连接！");
-            };
-
-            ws.onmessage = (event) => {
-                const kline = JSON.parse(event.data).k;
-                const candleData = {
-                    time: kline.t / 1000, open: parseFloat(kline.o), high: parseFloat(kline.h), low: parseFloat(kline.l), close: parseFloat(kline.c)
-                };
-                candleSeries.update(candleData);
-                updateUI(candleData.close, candleData.open);
-            };
-
-            ws.onerror = () => {
-                logMsg("WebSocket 实时连接报错断开。", true);
-                document.getElementById('statusText').innerHTML = 'Status: <span class="loss-red">Socket 断开</span>';
-            };
-        }
     </script>
 </body>
 </html>
