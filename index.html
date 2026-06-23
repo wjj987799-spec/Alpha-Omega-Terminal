@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alpha-Omega 量化交易终端</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        body { background-color: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        .glass-panel { background: rgba(22, 27, 34, 0.8); border: 1px solid #30363d; border-radius: 12px; backdrop-filter: blur(10px); }
+        .neon-text { text-shadow: 0 0 10px rgba(88, 166, 255, 0.5); }
+        .profit-green { color: #3fb950; }
+        .loss-red { color: #f85149; }
+    </style>
+</head>
+<body class="min-h-screen p-4 flex flex-col gap-4">
+
+    <header class="glass-panel p-4 flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-blue-400 neon-text">Alpha-Omega 策略引擎</h1>
+            <p class="text-xs text-gray-400 mt-1">Status: <span class="profit-green animate-pulse">● Online & Syncing</span></p>
+        </div>
+        <div class="text-right">
+            <div class="text-lg font-mono">当前监控: <span class="font-bold text-white">TRX / USDT</span></div>
+            <div id="currentPrice" class="text-2xl font-bold font-mono profit-green">加载中...</div>
+        </div>
+    </header>
+
+    <main class="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-4">
+        
+        <div class="glass-panel col-span-1 lg:col-span-3 p-4 flex flex-col">
+            <h2 class="text-sm font-semibold mb-2 text-gray-300">实时高频行情 (Binance WebSocket)</h2>
+            <div id="tvchart" class="flex-1 min-h-[400px] rounded overflow-hidden"></div>
+        </div>
+
+        <div class="glass-panel col-span-1 p-4 flex flex-col gap-4">
+            <h2 class="text-sm font-semibold text-gray-300 border-b border-gray-700 pb-2">策略运行指标</h2>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-gray-800 p-3 rounded">
+                    <p class="text-xs text-gray-400">夏普比率 (Sharpe)</p>
+                    <p class="text-lg font-bold text-blue-400">3.14</p>
+                </div>
+                <div class="bg-gray-800 p-3 rounded">
+                    <p class="text-xs text-gray-400">最大回撤 (MDD)</p>
+                    <p class="text-lg font-bold loss-red">-4.2%</p>
+                </div>
+                <div class="bg-gray-800 p-3 rounded">
+                    <p class="text-xs text-gray-400">年化收益 (APY)</p>
+                    <p class="text-lg font-bold profit-green">+68.5%</p>
+                </div>
+                <div class="bg-gray-800 p-3 rounded">
+                    <p class="text-xs text-gray-400">今日交易笔数</p>
+                    <p class="text-lg font-bold text-white">128</p>
+                </div>
+            </div>
+
+            <h2 class="text-sm font-semibold text-gray-300 border-b border-gray-700 pb-2 mt-4">实时交易信号</h2>
+            <div id="signalLog" class="flex-1 bg-gray-900 rounded p-2 overflow-y-auto font-mono text-xs text-gray-400 space-y-1 h-48">
+                </div>
+        </div>
+    </main>
+
+    <script>
+        // 1. 初始化 TradingView 图表
+        const chartOptions = { 
+            layout: { textColor: '#c9d1d9', background: { type: 'solid', color: 'transparent' } },
+            grid: { vertLines: { color: '#30363d' }, horzLines: { color: '#30363d' } },
+            crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+            rightPriceScale: { borderColor: '#30363d' },
+            timeScale: { borderColor: '#30363d', timeVisible: true, secondsVisible: true },
+        };
+        const chart = LightweightCharts.createChart(document.getElementById('tvchart'), chartOptions);
+        const candleSeries = chart.addCandlestickSeries({
+            upColor: '#3fb950', downColor: '#f85149', borderVisible: false,
+            wickUpColor: '#3fb950', wickDownColor: '#f85149'
+        });
+
+        // 2. 连接 Binance WebSocket 获取 TRX/USDT 实时数据
+        const symbol = 'trxusdt';
+        const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${symbol}@kline_1m`);
+        
+        let currentBar = null;
+
+        ws.onmessage = (event) => {
+            const message = JSON.parse(event.data);
+            const kline = message.k;
+            
+            const candleData = {
+                time: kline.t / 1000, // Unix timestamp in seconds
+                open: parseFloat(kline.o),
+                high: parseFloat(kline.h),
+                low: parseFloat(kline.l),
+                close: parseFloat(kline.c)
+            };
+
+            candleSeries.update(candleData);
+
+            // 更新顶部价格
+            const priceElement = document.getElementById('currentPrice');
+            priceElement.innerText = candleData.close.toFixed(4);
+            priceElement.className = candleData.close >= candleData.open ? 
+                'text-2xl font-bold font-mono profit-green' : 'text-2xl font-bold font-mono loss-red';
+
+            // 随机生成策略触发日志
+            if (Math.random() > 0.95) {
+                addLogSignal(candleData.close);
+            }
+        };
+
+        // 3. 模拟策略信号日志系统
+        function addLogSignal(price) {
+            const logBox = document.getElementById('signalLog');
+            const timeStr = new Date().toLocaleTimeString();
+            const isBuy = Math.random() > 0.5;
+            const action = isBuy ? '<span class="profit-green">[BUY]</span>' : '<span class="loss-red">[SELL]</span>';
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `${timeStr} - ${action} 执行于 ${price.toFixed(4)}`;
+            logBox.prepend(logEntry);
+            
+            if (logBox.children.length > 20) {
+                logBox.removeChild(logBox.lastChild);
+            }
+        }
+
+        // 适配窗口大小
+        window.addEventListener('resize', () => {
+            chart.applyOptions({ width: document.getElementById('tvchart').clientWidth });
+        });
+    </script>
+</body>
+</html>
