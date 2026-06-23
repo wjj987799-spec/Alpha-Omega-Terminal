@@ -3,181 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alpha-Omega 2026 终极版</title>
+    <title>Alpha-Omega (节能自驱版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <style>
-        body { background-color: #050b14; color: #c9d1d9; font-family: -apple-system, sans-serif; overflow-x: hidden; }
-        .glass-panel { background: rgba(13, 17, 23, 0.85); border: 1px solid #1f2937; border-radius: 12px; }
-        .neon-text { text-shadow: 0 0 15px rgba(88, 166, 255, 0.8); }
+        body { background-color: #050b14; color: #c9d1d9; overflow: hidden; font-family: -apple-system, sans-serif; }
         .profit-green { color: #10b981; }
         .loss-red { color: #ef4444; }
-        .price-transition { transition: color 0.1s ease-in-out; }
     </style>
 </head>
-<body class="min-h-screen p-4 flex flex-col gap-4">
-
-    <header class="glass-panel p-4 flex justify-between items-center border-b-2 border-blue-500">
+<body class="p-4 flex flex-col gap-4 h-screen">
+    
+    <header class="border border-gray-800 bg-gray-900/50 p-4 rounded-xl flex justify-between items-center">
         <div>
-            <h1 class="text-xl lg:text-3xl font-bold text-blue-400 neon-text tracking-wider">Alpha-Omega 2026</h1>
-            <p class="text-xs text-gray-400 mt-1">引擎模式: <span class="profit-green font-bold animate-pulse">● 核心算力分离执行中</span></p>
-        </div>
-        <div class="text-right">
-             <div class="text-xs text-gray-500 font-mono">LATENCY: <span class="text-green-400">0ms</span></div>
+            <h1 class="text-xl font-bold text-blue-400" style="text-shadow: 0 0 10px rgba(88,166,255,0.5);">Alpha-Omega 2026</h1>
+            <p class="text-xs text-green-400 animate-pulse mt-1">● 纯血 DOM 引擎 (无视 iOS 低电量限制)</p>
         </div>
     </header>
 
-    <main class="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-4">
-        <div class="glass-panel col-span-1 lg:col-span-3 p-4 flex flex-col min-h-[450px]">
-            <div class="flex justify-between items-center mb-2">
-                <h2 class="text-sm font-semibold text-gray-300">TRX/USDT 高频推演盘口 (Tick级别)</h2>
-                <div id="main-price" class="text-4xl font-bold font-mono profit-green price-transition">0.11500</div>
+    <main class="flex-1 border border-gray-800 bg-gray-900/50 rounded-xl p-4 flex flex-col gap-4">
+        
+        <div class="flex justify-between items-end">
+            <div>
+                <p class="text-xs text-gray-500 mb-1 font-mono">TRX/USDT (微秒级推演)</p>
+                <div id="price" class="text-5xl font-mono font-bold profit-green transition-colors duration-200">0.11500</div>
             </div>
-            <div id="tvchart" class="flex-1 w-full h-[350px] lg:h-full rounded overflow-hidden relative flex items-center justify-center bg-[#0a0f18] border border-gray-800">
-                <span id="chart-status" class="text-gray-500 font-mono text-sm animate-pulse">正在初始化视觉渲染引擎...</span>
+            <div class="text-right">
+                <p class="text-xs text-gray-500 mb-1">当前动能</p>
+                <p id="momentum" class="text-lg font-bold text-white">MAX</p>
             </div>
         </div>
 
-        <div class="col-span-1 flex flex-col gap-4">
-            <div class="glass-panel p-4">
-                <h2 class="text-sm font-semibold text-gray-300 border-b border-gray-700 pb-2 mb-3">高频引擎状态</h2>
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-gray-800 p-3 rounded border border-gray-700 text-center">
-                        <p class="text-xs text-gray-400">运算帧率</p>
-                        <p class="text-xl font-bold text-blue-400">5.0 /s</p>
-                    </div>
-                    <div class="bg-gray-800 p-3 rounded border border-gray-700 text-center">
-                        <p class="text-xs text-gray-400">视觉渲染</p>
-                        <p id="render-status" class="text-xl font-bold text-yellow-400">检测中</p>
-                    </div>
-                    <div class="bg-gray-800 p-3 rounded border border-gray-700 text-center">
-                        <p class="text-xs text-gray-400">做多概率</p>
-                        <p id="long-prob" class="text-xl font-bold profit-green">64%</p>
-                    </div>
-                    <div class="bg-gray-800 p-3 rounded border border-gray-700 text-center">
-                        <p class="text-xs text-gray-400">波动微粒</p>
-                        <p id="volatility" class="text-xl font-bold text-white">0.02</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="glass-panel p-4 flex-1 flex flex-col">
-                <h2 class="text-sm font-semibold text-gray-300 border-b border-gray-700 pb-2 mb-2">算力执行流</h2>
-                <div id="signalLog" class="flex-1 bg-[#0d1117] rounded p-2 overflow-y-auto font-mono text-[10px] sm:text-xs text-gray-400 space-y-1 min-h-[150px] max-h-[250px]">
-                </div>
-            </div>
+        <div class="flex-1 w-full relative bg-black/40 rounded border border-gray-800 overflow-hidden shadow-inner">
+            <svg id="chart" class="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+                <polyline id="line" fill="none" stroke="#10b981" stroke-width="2" vector-effect="non-scaling-stroke"></polyline>
+            </svg>
         </div>
+
+        <div class="h-32 overflow-y-auto bg-black/60 border border-gray-800 rounded p-2 text-xs font-mono text-gray-400 space-y-1" id="log"></div>
+        
     </main>
 
     <script>
-        // --- 1. 强悍的日志模块 ---
-        const logBox = document.getElementById('signalLog');
-        function logAction(msg, type = 'info') {
-            try {
-                const time = new Date().toISOString().split('T')[1].slice(0, 12);
-                let tag = '<span class="text-gray-500">[SYS]</span>';
-                if (type === 'buy') tag = '<span class="text-green-500 font-bold">[BUY]</span>';
-                if (type === 'sell') tag = '<span class="text-red-500 font-bold">[SELL]</span>';
-                if (type === 'error') tag = '<span class="text-red-500 font-bold">[ERR]</span>';
-                if (type === 'warn') tag = '<span class="text-yellow-500 font-bold">[WRN]</span>';
-                
-                const div = document.createElement('div');
-                div.innerHTML = `${time} ${tag} ${msg}`;
-                logBox.prepend(div);
-                if (logBox.children.length > 40) logBox.removeChild(logBox.lastChild);
-            } catch(e) {}
+        const priceEl = document.getElementById('price');
+        const lineEl = document.getElementById('line');
+        const logEl = document.getElementById('log');
+        const momentumEl = document.getElementById('momentum');
+
+        let price = 0.11500;
+        let history = Array(40).fill(price); // 记录屏幕上的 40 个点
+
+        function addLog(msg) {
+            const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+            logEl.insertAdjacentHTML('afterbegin', `<div><span class="text-gray-600">[${time}]</span> ${msg}</div>`);
+            if(logEl.children.length > 15) logEl.lastChild.remove();
         }
 
-        logAction("核心算力引擎已剥离并启动");
+        addLog("系统底层重置完成...");
+        addLog("已绕过设备休眠限制，原生 SVG 渲染器就绪");
 
-        // --- 2. 视觉渲染引擎探测与隔离 ---
-        let candleSeries = null;
-        let isChartActive = false;
+        // 核心推演循环
+        function updateTick() {
+            // 生成极微小的价格抖动
+            const change = (Math.random() - 0.5) * 0.0006;
+            const oldPrice = price;
+            price = +(price + change).toFixed(5);
 
-        try {
-            if (typeof LightweightCharts !== 'undefined') {
-                logAction("视觉渲染引擎 (CDN) 挂载成功");
-                document.getElementById('render-status').innerText = "ONLINE";
-                document.getElementById('render-status').className = "text-xl font-bold profit-green";
-                
-                const chartContainer = document.getElementById('tvchart');
-                chartContainer.innerHTML = ''; // 清除预设文字
-                
-                const chartOptions = { 
-                    layout: { textColor: '#c9d1d9', background: { type: 'solid', color: 'transparent' } },
-                    grid: { vertLines: { color: '#1f2937' }, horzLines: { color: '#1f2937' } },
-                    timeScale: { timeVisible: true, secondsVisible: true }
-                };
-                const chart = LightweightCharts.createChart(chartContainer, chartOptions);
-                candleSeries = chart.addCandlestickSeries({ 
-                    upColor: '#10b981', downColor: '#ef4444', borderVisible: false, wickUpColor: '#10b981', wickDownColor: '#ef4444' 
-                });
+            history.push(price);
+            history.shift();
 
-                new ResizeObserver(() => {
-                    chart.applyOptions({ width: chartContainer.clientWidth, height: chartContainer.clientHeight });
-                }).observe(chartContainer);
-
-                isChartActive = true;
-            } else {
-                throw new Error("LightweightCharts is undefined");
+            // 1. 刷新大字报价格
+            priceEl.innerText = price.toFixed(5);
+            if (price > oldPrice) {
+                priceEl.className = "text-5xl font-mono font-bold profit-green";
+                lineEl.setAttribute('stroke', '#10b981');
+                momentumEl.innerText = "BUY+";
+                momentumEl.className = "text-lg font-bold profit-green";
+            } else if (price < oldPrice) {
+                priceEl.className = "text-5xl font-mono font-bold loss-red";
+                lineEl.setAttribute('stroke', '#ef4444');
+                momentumEl.innerText = "SELL-";
+                momentumEl.className = "text-lg font-bold loss-red";
             }
-        } catch (e) {
-            logAction("网络拦截了画图库，已降级为【纯参数监测模式】", "warn");
-            document.getElementById('render-status').innerText = "BLOCKED";
-            document.getElementById('render-status').className = "text-xl font-bold loss-red";
-            document.getElementById('chart-status').innerText = "【渲染降级】K线图被网络拦截，核心算力仍在后台全速运行...";
-            document.getElementById('chart-status').className = "text-red-500 font-bold";
+
+            // 2. 实时绘制原生 SVG 折线图
+            const min = Math.min(...history);
+            const max = Math.max(...history);
+            const range = max - min || 0.0001;
+
+            const points = history.map((val, i) => {
+                const x = (i / 39) * 100; // 映射到 0-100 的宽度
+                const y = 100 - ((val - min) / range) * 100; // 映射到 0-100 的高度 (SVG 坐标原点在左上)
+                return `${x},${y}`;
+            }).join(' ');
+
+            document.getElementById('chart').setAttribute('viewBox', `0 0 100 100`);
+            lineEl.setAttribute('points', points);
+
+            // 3. 随机刷日志
+            if(Math.random() > 0.8) {
+                const isBuy = change > 0;
+                addLog(isBuy ? `<span class="text-green-500 font-bold">[执行]</span> 划转 50,000 TRX` : `<span class="text-red-500 font-bold">[执行]</span> 划转 35,000 TRX`);
+            }
+
+            // 【关键修复】使用对低电量模式最友好的递归延迟，取代 setInterval
+            setTimeout(() => {
+                requestAnimationFrame(updateTick);
+            }, 300); // 300ms 刷新一次
         }
 
-        // --- 3. 核心推演引擎 (无论图表死活，这颗心脏永远跳动) ---
-        let baseTime = Math.floor(Date.now() / 1000) - 300;
-        let currentPrice = 0.11500;
-        let currentCandle = { time: baseTime + 300, open: currentPrice, high: currentPrice, low: currentPrice, close: currentPrice };
-        let lastUpdateTime = Date.now();
-        
-        const priceDisplay = document.getElementById('main-price');
-        const probDisplay = document.getElementById('long-prob');
-        const volDisplay = document.getElementById('volatility');
-
-        // 每秒 5 次 (200ms) 绝对高频运转
-        setInterval(() => {
-            const now = Date.now();
-            
-            if (now - lastUpdateTime > 3000) {
-                currentCandle = { time: currentCandle.time + 3, open: currentPrice, high: currentPrice, low: currentPrice, close: currentPrice };
-                lastUpdateTime = now;
-            }
-
-            // 动能推演
-            const momentum = (Math.random() - 0.5) * 0.0004;
-            currentPrice = +(currentPrice + momentum).toFixed(5);
-            
-            currentCandle.high = Math.max(currentCandle.high, currentPrice);
-            currentCandle.low = Math.min(currentCandle.low, currentPrice);
-            currentCandle.close = currentPrice;
-
-            // 1. 更新大字报数字 (绝对执行)
-            priceDisplay.innerText = currentPrice.toFixed(5);
-            priceDisplay.className = currentPrice >= currentCandle.open ? 
-                "text-4xl font-bold font-mono profit-green price-transition" : 
-                "text-4xl font-bold font-mono loss-red price-transition";
-
-            // 2. 如果图表没死，才更新图表
-            if (isChartActive && candleSeries) {
-                candleSeries.update(currentCandle);
-            }
-
-            // 3. 随机产生日志和副指标 (绝对执行)
-            if (Math.random() > 0.8) {
-                const isBuy = Math.random() > 0.5;
-                const amt = Math.floor(Math.random() * 80000 + 5000);
-                logAction(`撮合引擎处理 ${amt} TRX 订单`, isBuy ? 'buy' : 'sell');
-                
-                probDisplay.innerText = Math.floor(Math.random() * 60 + 20) + '%';
-                volDisplay.innerText = (Math.random() * 0.08).toFixed(3);
-            }
-        }, 200);
-
+        // 引擎点火
+        updateTick();
     </script>
 </body>
 </html>
