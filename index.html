@@ -3,112 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alpha-Omega (节能自驱版)</title>
+    <title>Alpha-Omega V8 三端引擎</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #050b14; color: #c9d1d9; overflow: hidden; font-family: -apple-system, sans-serif; }
+        body { background-color: #050b14; color: #c9d1d9; font-family: -apple-system, sans-serif; overflow-x: hidden; }
         .profit-green { color: #10b981; }
         .loss-red { color: #ef4444; }
+        .glass-panel { background: rgba(13, 17, 23, 0.7); border: 1px solid #1f2937; border-radius: 12px; }
+        /* 隐藏滚动条但保持可滚动 */
+        ::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="p-4 flex flex-col gap-4 h-screen">
+<body class="p-4 flex flex-col gap-4 min-h-screen">
     
-    <header class="border border-gray-800 bg-gray-900/50 p-4 rounded-xl flex justify-between items-center">
+    <header class="glass-panel p-4 flex justify-between items-center border-b-2 border-blue-500">
         <div>
             <h1 class="text-xl font-bold text-blue-400" style="text-shadow: 0 0 10px rgba(88,166,255,0.5);">Alpha-Omega 2026</h1>
-            <p class="text-xs text-green-400 animate-pulse mt-1">● 纯血 DOM 引擎 (无视 iOS 低电量限制)</p>
+            <p class="text-xs text-green-400 animate-pulse mt-1">● 宏观阵列全开 (原生 SVG 渲染)</p>
         </div>
     </header>
 
-    <main class="flex-1 border border-gray-800 bg-gray-900/50 rounded-xl p-4 flex flex-col gap-4">
+    <main class="flex-1 flex flex-col gap-4 overflow-y-auto pb-4">
         
-        <div class="flex justify-between items-end">
-            <div>
-                <p class="text-xs text-gray-500 mb-1 font-mono">TRX/USDT (微秒级推演)</p>
-                <div id="price" class="text-5xl font-mono font-bold profit-green transition-colors duration-200">0.11500</div>
+        <div class="glass-panel p-3 flex flex-col gap-2 relative overflow-hidden border-l-4 border-blue-500">
+            <div class="flex justify-between items-end z-10">
+                <div>
+                    <p class="text-xs text-blue-400 font-mono mb-1">CRYPTO | TRX/USDT</p>
+                    <div id="price-trx" class="text-3xl font-mono font-bold profit-green transition-colors">0.11500</div>
+                </div>
+                <div class="text-right">
+                    <p id="trend-trx" class="text-sm font-bold profit-green">BUY+</p>
+                </div>
             </div>
-            <div class="text-right">
-                <p class="text-xs text-gray-500 mb-1">当前动能</p>
-                <p id="momentum" class="text-lg font-bold text-white">MAX</p>
+            <div class="h-24 w-full bg-black/40 rounded border border-gray-800 shadow-inner relative z-10">
+                <svg id="svg-trx" class="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+                    <polyline id="line-trx" fill="none" stroke="#10b981" stroke-width="2" vector-effect="non-scaling-stroke"></polyline>
+                </svg>
             </div>
         </div>
 
-        <div class="flex-1 w-full relative bg-black/40 rounded border border-gray-800 overflow-hidden shadow-inner">
-            <svg id="chart" class="absolute inset-0 w-full h-full" preserveAspectRatio="none">
-                <polyline id="line" fill="none" stroke="#10b981" stroke-width="2" vector-effect="non-scaling-stroke"></polyline>
-            </svg>
+        <div class="glass-panel p-3 flex flex-col gap-2 relative overflow-hidden border-l-4 border-purple-500">
+            <div class="flex justify-between items-end z-10">
+                <div>
+                    <p class="text-xs text-purple-400 font-mono mb-1">NASDAQ | TESLA (TSLA)</p>
+                    <div id="price-tsla" class="text-3xl font-mono font-bold profit-green transition-colors">405.05</div>
+                </div>
+                <div class="text-right">
+                    <p id="trend-tsla" class="text-sm font-bold profit-green">BUY+</p>
+                </div>
+            </div>
+            <div class="h-24 w-full bg-black/40 rounded border border-gray-800 shadow-inner relative z-10">
+                <svg id="svg-tsla" class="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+                    <polyline id="line-tsla" fill="none" stroke="#10b981" stroke-width="2" vector-effect="non-scaling-stroke"></polyline>
+                </svg>
+            </div>
         </div>
 
-        <div class="h-32 overflow-y-auto bg-black/60 border border-gray-800 rounded p-2 text-xs font-mono text-gray-400 space-y-1" id="log"></div>
-        
+        <div class="glass-panel p-3 flex flex-col gap-2 relative overflow-hidden border-l-4 border-red-500">
+            <div class="flex justify-between items-end z-10">
+                <div>
+                    <p class="text-xs text-red-400 font-mono mb-1">SSE | 上证指数 (000001)</p>
+                    <div id="price-sse" class="text-3xl font-mono font-bold loss-red transition-colors">4106.25</div>
+                </div>
+                <div class="text-right">
+                    <p id="trend-sse" class="text-sm font-bold loss-red">SELL-</p>
+                </div>
+            </div>
+            <div class="h-24 w-full bg-black/40 rounded border border-gray-800 shadow-inner relative z-10">
+                <svg id="svg-sse" class="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+                    <polyline id="line-sse" fill="none" stroke="#ef4444" stroke-width="2" vector-effect="non-scaling-stroke"></polyline>
+                </svg>
+            </div>
+        </div>
+
+        <div class="h-24 overflow-y-auto bg-black/60 border border-gray-800 rounded-xl p-2 text-[10px] font-mono text-gray-400 space-y-1" id="log"></div>
+
     </main>
 
     <script>
-        const priceEl = document.getElementById('price');
-        const lineEl = document.getElementById('line');
-        const logEl = document.getElementById('log');
-        const momentumEl = document.getElementById('momentum');
+        // 资产配置中心
+        const assets = {
+            trx:  { price: 0.11500, vol: 0.0006, dec: 5, history: Array(40).fill(0.11500) },
+            tsla: { price: 405.05,  vol: 0.8,    dec: 2, history: Array(40).fill(405.05) },
+            sse:  { price: 4106.25, vol: 4.5,    dec: 2, history: Array(40).fill(4106.25) }
+        };
 
-        let price = 0.11500;
-        let history = Array(40).fill(price); // 记录屏幕上的 40 个点
+        const logEl = document.getElementById('log');
 
         function addLog(msg) {
             const time = new Date().toLocaleTimeString('en-US', { hour12: false });
             logEl.insertAdjacentHTML('afterbegin', `<div><span class="text-gray-600">[${time}]</span> ${msg}</div>`);
-            if(logEl.children.length > 15) logEl.lastChild.remove();
+            if(logEl.children.length > 8) logEl.lastChild.remove();
         }
 
-        addLog("系统底层重置完成...");
-        addLog("已绕过设备休眠限制，原生 SVG 渲染器就绪");
+        addLog("正在初始化三端宏观阵列...");
+        addLog("纯 DOM/SVG 引擎已接管渲染权限");
 
-        // 核心推演循环
+        // 核心推演循环 (处理所有资产)
         function updateTick() {
-            // 生成极微小的价格抖动
-            const change = (Math.random() - 0.5) * 0.0006;
-            const oldPrice = price;
-            price = +(price + change).toFixed(5);
+            Object.keys(assets).forEach(key => {
+                const asset = assets[key];
+                
+                // 1. 生成抖动
+                const change = (Math.random() - 0.5) * asset.vol;
+                const oldPrice = asset.price;
+                asset.price = +(asset.price + change).toFixed(asset.dec);
 
-            history.push(price);
-            history.shift();
+                asset.history.push(asset.price);
+                asset.history.shift();
 
-            // 1. 刷新大字报价格
-            priceEl.innerText = price.toFixed(5);
-            if (price > oldPrice) {
-                priceEl.className = "text-5xl font-mono font-bold profit-green";
-                lineEl.setAttribute('stroke', '#10b981');
-                momentumEl.innerText = "BUY+";
-                momentumEl.className = "text-lg font-bold profit-green";
-            } else if (price < oldPrice) {
-                priceEl.className = "text-5xl font-mono font-bold loss-red";
-                lineEl.setAttribute('stroke', '#ef4444');
-                momentumEl.innerText = "SELL-";
-                momentumEl.className = "text-lg font-bold loss-red";
-            }
+                // 2. 更新 DOM 节点
+                const priceEl = document.getElementById(`price-${key}`);
+                const trendEl = document.getElementById(`trend-${key}`);
+                const lineEl = document.getElementById(`line-${key}`);
+                
+                const isUp = asset.price >= oldPrice;
+                const colorClass = isUp ? "profit-green" : "loss-red";
+                const hexColor = isUp ? "#10b981" : "#ef4444";
 
-            // 2. 实时绘制原生 SVG 折线图
-            const min = Math.min(...history);
-            const max = Math.max(...history);
-            const range = max - min || 0.0001;
+                priceEl.innerText = asset.price.toFixed(asset.dec);
+                priceEl.className = `text-3xl font-mono font-bold transition-colors ${colorClass}`;
+                
+                trendEl.innerText = isUp ? "BUY+" : "SELL-";
+                trendEl.className = `text-sm font-bold ${colorClass}`;
+                lineEl.setAttribute('stroke', hexColor);
 
-            const points = history.map((val, i) => {
-                const x = (i / 39) * 100; // 映射到 0-100 的宽度
-                const y = 100 - ((val - min) / range) * 100; // 映射到 0-100 的高度 (SVG 坐标原点在左上)
-                return `${x},${y}`;
-            }).join(' ');
+                // 3. 绘制专属 SVG
+                const min = Math.min(...asset.history);
+                const max = Math.max(...asset.history);
+                const range = max - min || 0.0001;
 
-            document.getElementById('chart').setAttribute('viewBox', `0 0 100 100`);
-            lineEl.setAttribute('points', points);
+                const points = asset.history.map((val, i) => {
+                    const x = (i / 39) * 100; 
+                    const y = 100 - ((val - min) / range) * 100; 
+                    return `${x},${y}`;
+                }).join(' ');
 
-            // 3. 随机刷日志
+                document.getElementById(`svg-${key}`).setAttribute('viewBox', `0 0 100 100`);
+                lineEl.setAttribute('points', points);
+            });
+
+            // 随机刷日志制造科技感
             if(Math.random() > 0.8) {
-                const isBuy = change > 0;
-                addLog(isBuy ? `<span class="text-green-500 font-bold">[执行]</span> 划转 50,000 TRX` : `<span class="text-red-500 font-bold">[执行]</span> 划转 35,000 TRX`);
+                const logs = [
+                    `<span class="text-blue-500 font-bold">[TRX]</span> 监测到大额钱包异动`,
+                    `<span class="text-purple-500 font-bold">[TSLA]</span> 触发做市商高频量化网格`,
+                    `<span class="text-red-500 font-bold">[SSE]</span> 北向资金流入模型触发`
+                ];
+                addLog(logs[Math.floor(Math.random() * logs.length)]);
             }
 
-            // 【关键修复】使用对低电量模式最友好的递归延迟，取代 setInterval
+            // 防休眠循环调度
             setTimeout(() => {
                 requestAnimationFrame(updateTick);
-            }, 300); // 300ms 刷新一次
+            }, 300);
         }
 
         // 引擎点火
